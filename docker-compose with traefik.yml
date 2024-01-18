@@ -1,0 +1,189 @@
+---
+version: '3.3'
+
+services:
+  herai_recording:
+    image: mirkowust/herai_recording:1.0.0
+    container_name: herai_recording
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/webdata/public:/app/public
+      - /mnt/herai/app/records:/app/records
+      - /mnt/herai/app/env:/app/env
+
+  herai_stack:
+    image: mirkowust/herai_stack:1.0.0
+    container_name: herai_stack
+    logging:
+      options:
+        max-size: "2m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/records:/app/records
+      - /mnt/herai/app/env:/app/env
+
+  herai_analyze:
+    image: mirkowust/herai_analyze:1.0.0
+    container_name: herai_analyze
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/webdata/public:/app/public
+      - /mnt/herai/app/records:/app/records
+      - /mnt/herai/app/archive:/app/archive
+      - /mnt/herai/app/env:/app/env
+
+  herai_detectmovmt:
+    image: mirkowust/herai_detectmovmt:1.0.0
+    container_name: herai_detectmovmt
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/records:/app/records
+      - /mnt/herai/app/archive:/app/archive
+      - /mnt/herai/app/webdata/public:/app/public
+      - /mnt/herai/app/env:/app/env
+
+  herai_trim:
+    image: mirkowust/herai_trim:1.0.0
+    container_name: herai_trim
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    links:
+      - herai_influxdb
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/webdata/public:/app/public
+      - /mnt/herai/app/records:/app/records
+      - /mnt/herai/app/archive:/app/archive
+      - /mnt/herai/app/env:/app/env
+
+  herai_housekeeping:
+    image: mirkowust/herai_housekeeping:1.0.0
+    container_name: herai_housekeeping
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/records:/app/records
+      - /mnt/herai/app/archive:/app/archive
+      - /mnt/herai/app/webdata/public:/app/public
+      - /mnt/herai/app/env:/app/env
+  
+  herai_web:
+    image: "mirkowust/herai_web:1.0.1"
+    container_name: herai_web
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    restart: unless-stopped
+    user: "1000:1000"
+    networks:
+      - traefik_proxy
+      - default
+    ports:
+      - "18200:80/tcp" # http
+    links:
+      - herai_influxdb
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/app/archive:/app/archive
+      - /mnt/herai/app/webdata/public:/app/public
+      - /mnt/herai/app/env:/app/env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.herai.entrypoints=websecure"
+      - "traefik.http.routers.herai.rule=Host(`mydomain.example.com`)"   # replace mydomain.example.com with your own domain
+      - "traefik.http.routers.herai.tls=true"
+      - "traefik.http.routers.herai.tls.certresolver=default"
+      - "traefik.http.services.herai.loadbalancer.server.port=80"
+    environment:
+      USER_ID: "1000"
+      GROUP_ID: "1000"
+
+  herai_influxdb:
+    image: "influxdb:2.0.9"
+    container_name: herai_influxdb
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    ports:
+     - "18210:8086/tcp" # http
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/db/data:/var/lib/influxdb2
+      - /mnt/herai/db/config:/etc/influxdb2
+      - /mnt/herai/db/scripts:/docker-entrypoint-initdb.d
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "herai"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "Hello!Herai2023"
+      DOCKER_INFLUXDB_INIT_ORG: "herai"
+      DOCKER_INFLUXDB_INIT_BUCKET: "meteors"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "-JKEjZuV6BeGUJH-YrJCtmxnk-1eBZW3sF-pT5klK51TICS57oLsO8x55-RYEiQ5S_4vP7ciI5KuR9-bQmZUPw=="
+
+  herai_grafana:
+    image: grafana/grafana:latest
+    container_name: herai_grafana
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "3m"
+        max-file: "1"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/herai/grafana/data:/var/lib/grafana
+    ports:
+      - 18220:3000
+    links:
+      - herai_influxdb
+    user: "0"
+
+# networks:
+#   default:
+
+networks:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
+  default:
+    driver: bridge
