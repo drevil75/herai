@@ -45,7 +45,7 @@ sudo usermod -aG docker $USER
 # set the rights of the herai folder
 sudo chown -R $USER. /mnt/herai
 sudo chmod -R 777 /mnt/herai
-````shell
+````
 
 # installation of herai
 ````shell
@@ -54,7 +54,7 @@ cd /mnt/herai
 
 # load the containers. The containers will loaded and startet automatically
 docker-compose up -d
-````shell
+````
 
 Now herai should be up and running
 
