@@ -1,10 +1,11 @@
 # HER:ai Project
 
-The manual comming soon (in the next days) at this place.
+A better manual comming soon at this place.
 Please be patiant.
 
+# prepare deployment
 
-## on linux
+## on linux (install and connect via ssh or console)
 
 ````shell
 # install all tools for the herai project
@@ -35,5 +36,31 @@ sudo nano /etc/fstab
 # now mount the path with
 sudo mount -a
 
+# docker post-installation steps - add a group named docker
+sudo groupadd docker
 
+# add your user to the docker group
+sudo usermod -aG docker $USER
 
+# set the rights of the herai folder
+sudo chown -R $USER. /mnt/herai
+sudo chmod -R 777 /mnt/herai
+````shell
+
+# installation of herai
+````shell
+# change to the herai folder
+cd /mnt/herai
+
+# load the containers. The containers will loaded and startet automatically
+docker-compose up -d
+````shell
+
+Now herai should be up and running
+
+open your browser and change to the url
+http://<your server or ip>:18200
+
+login with... (that are the default credentials - the function to create your own user comming soon) 
+user=herai
+pw=Hello!Herai2023
