@@ -52,7 +52,7 @@ sudo chmod -R 777 /mnt/herai
 # change to the herai folder
 cd /mnt/herai
 
-# load the containers. The containers will loaded and startet automatically
+# the containers will be loaded and started automatically
 docker-compose up -d
 ````
 
