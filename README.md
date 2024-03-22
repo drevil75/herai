@@ -59,7 +59,7 @@ docker-compose up -d
 Now herai should be up and running
 
 open your browser and change to the url
-http://<your server or ip>:18200
+http://servername-or-ip:18200
 
 login with... (that are the default credentials - the function to create your own user comming soon) 
 user=herai
